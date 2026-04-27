@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exercise Demo — PhysioAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .demo-wrap { width: 100%; max-width: 800px; margin: 0 auto; padding: 18px 16px 40px; position: relative; z-index: 2; }
+    .prog-row { display: flex; gap: 7px; justify-content: center; margin-bottom: 16px; }
+    .prog-dot { width: 24px; height: 4px; border-radius: 2px; background: var(--s); transition: all .3s; }
+    .prog-dot.done   { background: var(--td); }
+    .prog-dot.active { background: var(--t); box-shadow: 0 0 7px var(--t); }
+    .timer-bar { height: 4px; background: var(--s); border-radius: 2px; margin-bottom: 16px; overflow: hidden; }
+    .timer-fill { height: 100%; background: linear-gradient(90deg, var(--t), #00fff5); border-radius: 2px; transition: width .9s linear; }
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #000;
+      border: 2px solid var(--bo);
+      margin-bottom: 12px;
+    }
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .demo-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .sym-tag {
+      display: inline-block; padding: 3px 9px; border-radius: 50px;
+      background: rgba(0,201,177,.08); border: 1px solid var(--bo);
+      font-size: .69rem; color: var(--t); margin: 2px 2px 2px 0;
+    }
+    .demo-footer { display: flex; justify-content: space-between; align-items: center; gap: 9px; flex-wrap: wrap; }
+    @media (max-width: 600px) {
+      .demo-meta { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <nav>
+    <a href="dashboard.html" class="logo">Physio<span>AI</span><small>by GPNV Creations</small></a>
+    <a href="dashboard.html" class="btn btn-g btn-sm">← Dashboard</a>
+  </nav>
+
+  <div class="demo-wrap">
+    <div style="text-align:center;margin-bottom:13px;">
+      <div style="font-size:.73rem;color:var(--m);margin-bottom:7px;" id="demoLabel">—</div>
+      <div class="prog-row" id="demoProg"></div>
+    </div>
+
+    <div class="card" style="padding:17px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--t);color:var(--n);font-family:'Syne',sans-serif;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.8rem;" id="demoNum">1</div>
+        <div style="flex:1;">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;" id="demoName">—</div>
+          <div style="color:var(--m);font-size:.73rem;" id="demoDur">—</div>
+          <div style="color:var(--t);font-size:.73rem;font-weight:600;" id="demoReps">—</div>
+        </div>
+        <span class="bx bx-e" id="demoBadge">Easy</span>
+      </div>
+
+      <!-- Embedded video player (plays inline, no redirect) -->
+      <div class="video-container" id="videoPlayer"></div>
+
+      <div class="vid-hint" style="margin:12px 0; padding:10px; background:rgba(0,201,177,.08); border-radius:10px; font-size:.78rem; color:var(--m);">
+        📺 Watch the demo video above. After watching, click "Start Exercise" to begin your AI‑guided session.
+      </div>
+
+      <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+
+      <div class="demo-meta">
+        <div>
+          <div style="font-size:.68rem;text-transform:uppercase;color:var(--m);margin-bottom:5px;">What to Do</div>
+          <div style="font-size:.8rem;color:var(--m);line-height:1.65;" id="demoDesc">—</div>
+        </div>
+        <div>
+          <div style="font-size:.68rem;text-transform:uppercase;color:var(--m);margin-bottom:5px;">Helps With</div>
+          <div id="demoSyms"></div>
+        </div>
+      </div>
+
+      <div class="demo-footer">
+        <div style="font-size:.76rem;color:var(--m);">
+          Watch the demo, then click <strong style="color:var(--t);">Start Exercise</strong>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-g btn-sm" onclick="skipVideo()">Skip Video</button>
+          <button class="btn btn-p btn-sm" onclick="goToSession()">👻 Start Exercise →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script>
+    let U = null, exercises = [], currentIdx = 0, timerID = null;
+
+    function $(id) { return document.getElementById(id); }
+
+    function toast(msg, type='i') {
+      const wrap = $('toastWrap');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function loadExercise() {
+      const ex = exercises[currentIdx];
+      if (!ex) {
+        window.location.href = 'complete.html';
+        return;
+      }
+
+      const p = U.profile;
+      $('demoLabel').innerText = `${p.injury || ''} · ${p.cause || ''}`;
+
+      // Progress dots
+      $('demoProg').innerHTML = exercises.map((_, i) => 
+        `<div class="prog-dot ${i < currentIdx ? 'done' : i === currentIdx ? 'active' : ''}"></div>`
+      ).join('');
+
+      $('demoNum').innerText = currentIdx + 1;
+      $('demoName').innerText = ex.name;
+      $('demoDur').innerText = `Duration: ${ex.dur} seconds`;
+      $('demoReps').innerText = `Reps: ${ex.reps || 'See video'}`;
+      $('demoDesc').innerText = ex.desc;
+
+      const diff = p.difficulty || 'Easy';
+      const badgeClass = diff === 'High' ? 'bx-h' : diff === 'Intermediate' ? 'bx-m' : 'bx-e';
+      $('demoBadge').innerText = diff;
+      $('demoBadge').className = `bx ${badgeClass}`;
+
+      $('demoSyms').innerHTML = ex.syms.map(s => `<span class="sym-tag">${s}</span>`).join('');
+
+      // Embed YouTube video (inline, no redirect)
+      const videoId = ex.vid;
+      const embedHtml = `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+      $('videoPlayer').innerHTML = embedHtml;
+
+      // Timer bar animation
+      clearInterval(timerID);
+      let remaining = ex.dur;
+      $('timerFill').style.width = '100%';
+      timerID = setInterval(() => {
+        remaining = Math.max(0, remaining - 1);
+        $('timerFill').style.width = (remaining / ex.dur * 100) + '%';
+        if (remaining === 0) clearInterval(timerID);
+      }, 1000);
+
+      localStorage.setItem('currentExIdx', currentIdx);
+    }
+
+    function skipVideo() {
+      clearInterval(timerID);
+      goToSession();
+    }
+
+    function goToSession() {
+      clearInterval(timerID);
+      window.location.href = 'session.html';
+    }
+
+    window.onload = () => {
+      U = JSON.parse(localStorage.getItem('pu'));
+      if (!U || !U.profile) {
+        window.location.href = 'login.html';
+        return;
+      }
+      exercises = getExs(U.profile.cause);
+      currentIdx = parseInt(localStorage.getItem('currentExIdx') || '0');
+      if (currentIdx >= exercises.length) currentIdx = 0;
+
+      loadExercise();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysioAI — Smart Recovery at Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    #page-landing {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 44px 16px;
+      position: relative; min-height: 100vh;
+    }
+    .hero-wrap { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .hbadge {
+      display: inline-block; padding: 4px 14px; border-radius: 50px;
+      background: rgba(0,201,177,.1); border: 1px solid var(--bo);
+      font-size: .74rem; color: var(--t); letter-spacing: .05em; margin-bottom: 16px;
+    }
+    .hero-h1 {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-size: clamp(2rem, 5.5vw, 3.5rem); line-height: 1.1;
+      max-width: 700px; margin: 0 auto 14px;
+    }
+    .hero-h1 em { font-style: normal; color: var(--t); }
+    .hero-sub { color: var(--m); font-size: .93rem; max-width: 480px; margin: 0 auto 28px; line-height: 1.7; }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 12px; }
+    .feat-grid {
+      display: flex; gap: 13px; margin-top: 50px;
+      flex-wrap: wrap; justify-content: center;
+      max-width: 820px; width: 100%;
+    }
+    .feat-card { flex: 1; min-width: 175px; max-width: 225px; text-align: left; padding: 15px; }
+    .feat-icon { font-size: 1.65rem; margin-bottom: 8px; }
+    .feat-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .86rem; margin-bottom: 4px; }
+    .feat-desc { font-size: .74rem; color: var(--m); line-height: 1.55; }
+    .cfooter {
+      margin-top: 48px; padding: 12px 20px;
+      background: rgba(0,201,177,.06); border: 1px solid var(--bo);
+      border-radius: 11px; font-size: .76rem; color: var(--m);
+    }
+    .cfooter strong { color: var(--t); }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <nav>
+    <div class="logo">Physio<span>AI</span><small>by GPNV Creations</small></div>
+    <div style="display:flex;gap:8px;">
+      <a href="pages/login.html" class="btn btn-o btn-sm">Login</a>
+      <a href="pages/signup.html" class="btn btn-p btn-sm">Get Started</a>
+    </div>
+  </nav>
+
+  <div id="page-landing">
+    <div class="hero-wrap">
+      <div class="hbadge">🤖 AI-Powered · Real Camera · No Wearables Needed</div>
+      <h1 class="hero-h1">Your <em>Personal Physio</em><br>Lives in Your Browser</h1>
+      <p class="hero-sub">Real-time pose tracking, ghost-guided exercises, facial pain detection and muscle shiver sensing — all from your webcam.</p>
+      <div class="hero-btns">
+        <a href="pages/signup.html" class="btn btn-p" style="font-size:.9rem;padding:11px 28px;">Start Free Recovery →</a>
+        <a href="pages/login.html"  class="btn btn-g" style="font-size:.9rem;padding:11px 28px;">Sign In</a>
+      </div>
+      <div class="feat-grid">
+        <div class="card feat-card">
+          <div class="feat-icon">👻</div>
+          <div class="feat-title">AI Ghost Guide</div>
+          <div class="feat-desc">Animated ghost skeleton moves through the exercise. Mirror it — your body lights up green when aligned.</div>
+        </div>
+        <div class="card feat-card">
+          <div class="feat-icon">📷</div>
+          <div class="feat-title">Live Camera</div>
+          <div class="feat-desc">You see yourself AND the ghost together on screen — like a mirror with an AI trainer overlaid.</div>
+        </div>
+        <div class="card feat-card">
+          <div class="feat-icon">😣</div>
+          <div class="feat-title">Pain Detection</div>
+          <div class="feat-desc">Facial mesh detects brow furrow and grimace in real time. Auto rest triggered immediately.</div>
+        </div>
+        <div class="card feat-card">
+          <div class="feat-icon">🫨</div>
+          <div class="feat-title">Shiver / Fatigue</div>
+          <div class="feat-desc">Wrist motion variance detects muscle trembling — session pauses so you recover safely.</div>
+        </div>
+      </div>
+      <div class="cfooter">
+        Built by <strong>GPNV Creations</strong> &nbsp;·&nbsp;
+        AI Physiotherapy Web App &nbsp;·&nbsp;
+        MediaPipe Pose + FaceMesh + Web Speech API
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

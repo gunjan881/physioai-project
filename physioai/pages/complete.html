@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhysioAI — Session Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body {
+      background: var(--n);
+      font-family: 'DM Sans', sans-serif;
+      padding: 20px;
+    }
+    .report-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: rgba(10,22,40,0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 32px;
+      border: 1px solid var(--bo);
+      padding: 28px;
+      position: relative;
+      z-index: 2;
+    }
+    .report-header {
+      text-align: center;
+      margin-bottom: 28px;
+      border-bottom: 2px solid var(--t);
+      padding-bottom: 15px;
+    }
+    .report-header h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2rem;
+      color: var(--t);
+      margin: 0;
+    }
+    .report-header .sub {
+      color: var(--m);
+      font-size: 0.85rem;
+      margin-top: 5px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      background: var(--s);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+    .info-item {
+      text-align: center;
+    }
+    .info-item .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--m);
+      letter-spacing: 1px;
+    }
+    .info-item .value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--w);
+      margin-top: 4px;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+      margin: 24px 0 12px 0;
+      color: var(--t);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 4px solid var(--t);
+      padding-left: 12px;
+    }
+    .exercise-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-bottom: 20px;
+    }
+    .exercise-table th {
+      text-align: left;
+      padding: 12px 6px;
+      background: rgba(0,201,177,0.1);
+      color: var(--t);
+      font-weight: 600;
+    }
+    .exercise-table td {
+      padding: 10px 6px;
+      border-bottom: 1px solid rgba(0,201,177,0.15);
+      color: var(--w);
+    }
+    .accuracy-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .acc-high { background: rgba(6,214,160,0.2); color: var(--g); }
+    .acc-mid  { background: rgba(255,190,11,0.2); color: var(--y); }
+    .acc-low  { background: rgba(255,77,109,0.2); color: var(--r); }
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      margin: 20px 0;
+    }
+    .stat-card {
+      background: var(--s);
+      border-radius: 18px;
+      padding: 12px 16px;
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+      border: 1px solid var(--bo);
+    }
+    .stat-card .number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: 'Syne', sans-serif;
+      color: var(--t);
+    }
+    .stat-card .label {
+      font-size: 0.7rem;
+      color: var(--m);
+      text-transform: uppercase;
+    }
+    .footer-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .credit {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.7rem;
+      color: var(--m);
+    }
+    @media (max-width: 700px) {
+      .report-container { padding: 16px; }
+      .exercise-table th, .exercise-table td { font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="report-container">
+    <div class="report-header">
+      <h1>📋 PHYSIOAI SESSION REPORT</h1>
+      <div class="sub">Powered by GPNV Creations · AI Physiotherapy Assessment</div>
+    </div>
+
+    <!-- User & Session Info -->
+    <div class="info-grid" id="userInfo"></div>
+
+    <!-- Exercise Performance Table -->
+    <div class="section-title">
+      <span>🏋️</span> EXERCISE PERFORMANCE BREAKDOWN
+    </div>
+    <table class="exercise-table" id="exerciseTable">
+      <thead>
+        <tr><th>Exercise</th><th>Accuracy</th><th>Reps</th><th>Wrong</th><th>Pain</th><th>Fatigue</th></tr>
+      </thead>
+      <tbody id="exerciseBody"></tbody>
+    </table>
+
+    <!-- Overall Statistics -->
+    <div class="section-title">
+      <span>📊</span> SESSION SUMMARY
+    </div>
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- Action Buttons -->
+    <div class="footer-buttons">
+      <a href="dashboard.html" class="btn btn-p">📊 DASHBOARD</a>
+      <button class="btn btn-g" onclick="downloadCSV()">⬇ DOWNLOAD CSV</button>
+      <button class="btn btn-o" onclick="repeatSession()">🔄 REPEAT SESSION</button>
+    </div>
+    <div class="credit">© GPNV Creations · AI Physiotherapy Assistant</div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    let userProfile = null;
+    let sessionDate = new Date();
+    let sessionRecords = [];
+
+    function toast(msg, type='i'){
+      const wrap = $('toastWrap');
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function getCurrentSessionRecords() {
+      const all = JSON.parse(localStorage.getItem('ps') || '[]');
+      const userData = JSON.parse(localStorage.getItem('pu') || '{}');
+      const username = userData.username || 'guest';
+      const userSessions = all.filter(s => s.user === username);
+      if (!userProfile || !userProfile.cause) return [];
+      const exercisesList = getExs(userProfile.cause);
+      const count = exercisesList.length;
+      // Take the most recent 'count' records (the session just completed)
+      const recent = userSessions.slice(-count);
+      return recent;
+    }
+
+    function loadReport() {
+      const userData = JSON.parse(localStorage.getItem('pu') || 'null');
+      if (!userData || !userData.profile) {
+        window.location.href = 'login.html';
+        return;
+      }
+      userProfile = userData.profile;
+      sessionDate = new Date();
+
+      // Display user info
+      $('userInfo').innerHTML = `
+        <div class="info-item"><div class="label">NAME</div><div class="value">${userData.fn || ''} ${userData.ln || ''}</div></div>
+        <div class="info-item"><div class="label">INJURY / CAUSE</div><div class="value">${userProfile.injury || '—'} / ${userProfile.cause || '—'}</div></div>
+        <div class="info-item"><div class="label">DIFFICULTY</div><div class="value">${userProfile.difficulty || 'Easy'}</div></div>
+        <div class="info-item"><div class="label">SESSION DATE</div><div class="value">${sessionDate.toLocaleDateString()} · ${sessionDate.toLocaleTimeString()}</div></div>
+      `;
+
+      sessionRecords = getCurrentSessionRecords();
+      if (sessionRecords.length === 0) {
+        $('exerciseBody').innerHTML = '<tr><td colspan="6" style="text-align:center;">No exercise data found for this session.</td></tr>';
+        $('statsRow').innerHTML = '<div class="stat-card"><div class="number">0</div><div class="label">No data</div></div>';
+        return;
+      }
+
+      let totalAccuracy = 0, totalReps = 0, totalWrong = 0, totalPain = 0, totalFatigue = 0;
+      let rows = '';
+      sessionRecords.forEach(rec => {
+        totalAccuracy += rec.acc || 0;
+        totalReps += rec.reps || 0;
+        totalWrong += rec.wrong || 0;
+        totalPain += rec.pain || 0;
+        totalFatigue += rec.fat || 0;
+        let accClass = (rec.acc >= 70) ? 'acc-high' : (rec.acc >= 40) ? 'acc-mid' : 'acc-low';
+        rows += `<tr>
+          <td>${rec.exercise}</td>
+          <td><span class="accuracy-badge ${accClass}">${rec.acc}%</span></td>
+          <td>${rec.reps || 0}</td>
+          <td>${rec.wrong || 0}</td>
+          <td>${rec.pain || 0}</td>
+          <td>${rec.fat || 0}</td>
+        </tr>`;
+      });
+      $('exerciseBody').innerHTML = rows;
+
+      const avgAccuracy = Math.round(totalAccuracy / sessionRecords.length);
+      const overallClass = (avgAccuracy >= 70) ? 'acc-high' : (avgAccuracy >= 40) ? 'acc-mid' : 'acc-low';
+      $('statsRow').innerHTML = `
+        <div class="stat-card"><div class="number">${sessionRecords.length}</div><div class="label">Exercises</div></div>
+        <div class="stat-card"><div class="number">${totalReps}</div><div class="label">Total Reps</div></div>
+        <div class="stat-card"><div class="number">${totalWrong}</div><div class="label">Wrong Attempts</div></div>
+        <div class="stat-card"><div class="number">${totalPain}</div><div class="label">Pain Events</div></div>
+        <div class="stat-card"><div class="number">${totalFatigue}</div><div class="label">Fatigue Events</div></div>
+        <div class="stat-card"><div class="number"><span class="accuracy-badge ${overallClass}" style="font-size:1.2rem;">${avgAccuracy}%</span></div><div class="label">Overall Accuracy</div></div>
+      `;
+    }
+
+    function downloadCSV() {
+      const userData = JSON.parse(localStorage.getItem('pu') || '{}');
+      const profile = userData.profile || {};
+      const allSessions = JSON.parse(localStorage.getItem('ps') || '[]');
+      const userSessions = allSessions.filter(s => s.user === (userData.username || 'guest'));
+      let csv = `PhysioAI Report - GPNV Creations\n`;
+      csv += `Name,${userData.fn || ''} ${userData.ln || ''}\n`;
+      csv += `Injury,${profile.injury || ''}\nCause,${profile.cause || ''}\n`;
+      csv += `Report Date,${sessionDate.toLocaleString()}\n\n`;
+      csv += `Exercise,Accuracy (%),Reps,Wrong,Pain,Fatigue,Date\n`;
+      userSessions.forEach(s => {
+        csv += `"${s.exercise}",${s.acc},${s.reps},${s.wrong},${s.pain},${s.fat},"${new Date(s.date).toLocaleString()}"\n`;
+      });
+      const blob = new Blob([csv], {type: 'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `physioai_report_${sessionDate.toISOString().slice(0,19)}.csv`;
+      a.click();
+      toast('CSV report downloaded!', 's');
+    }
+
+    function repeatSession() {
+      localStorage.setItem('currentExIdx', '0');
+      window.location.href = 'demo.html';
+    }
+
+    window.onload = loadReport;
+  </script>
+</body>
+</html>

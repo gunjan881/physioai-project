@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Profile Setup — PhysioAI</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<h2>Profile Setup</h2>
+
+<input id="pr-age" placeholder="Age"><br><br>
+<input id="pr-wt" placeholder="Weight"><br><br>
+<input id="pr-inj" placeholder="Injury"><br><br>
+<input id="pr-caus" placeholder="Cause"><br><br>
+
+<button onclick="saveProfile()">Save</button>
+
+<script>
+function $(id){ return document.getElementById(id); }
+
+async function saveProfile() {
+  const age = $('#pr-age').value.trim();
+  const wt = $('#pr-wt').value.trim();
+  const inj = $('#pr-inj').value;
+  const caus = $('#pr-caus').value;
+
+  if (!age || !wt || !inj || !caus) {
+    return toast('Please fill all fields', 'e');
+  }
+
+  const user = JSON.parse(localStorage.getItem("pu"));
+
+  if (!user) {
+    toast('Please login again', 'e');
+    window.location.href = 'login.html';
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id: user.id,
+        age: age,
+        weight_kg: wt,
+        injury_area: inj,
+        cause: caus,
+        difficulty: "Easy"
+      })
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      toast('Profile saved! 🎉', 's');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 800);
+    } else {
+      toast(result.error || 'Error saving profile', 'e');
+    }
+
+  } catch (err) {
+    console.error(err);
+    toast('Server error', 'e');
+  }
+}
+</script>
+
+</body>
+</html>

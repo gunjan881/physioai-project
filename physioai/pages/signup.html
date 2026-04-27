@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — PhysioAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .auth-link { color: var(--t); text-decoration: underline; }
+    .auth-box { width: 100%; max-width: 400px; }
+    .auth-box h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.7rem; margin-bottom: 4px; }
+    .auth-box .sub { color: var(--m); font-size: .82rem; margin-bottom: 20px; }
+    .pw-strength { height: 3px; border-radius: 2px; margin-top: 5px; transition: all .3s; background: var(--bo); }
+    .pw-hint { font-size: .7rem; color: var(--m); margin-top: 3px; }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <nav>
+    <a href="../index.html" class="logo">Physio<span>AI</span><small>by GPNV Creations</small></a>
+    <a href="../index.html" class="btn btn-g btn-sm">← Back</a>
+  </nav>
+
+  <div class="cw" style="position:relative;z-index:2;">
+    <div class="card auth-box">
+      <h2>Create Account ✨</h2>
+      <p class="sub">Already have one? <a href="login.html" class="auth-link">Sign in</a></p>
+
+      <div class="g2">
+        <div class="fg"><label>First Name *</label><input id="fn"></div>
+        <div class="fg"><label>Last Name</label><input id="ln"></div>
+      </div>
+      <div class="fg"><label>Email *</label><input id="em" type="email"></div>
+      <div class="fg"><label>Username *</label><input id="un"></div>
+      <div class="fg"><label>Phone</label><input id="ph"></div>
+
+      <div class="g2">
+        <div class="fg">
+          <label>Password *</label>
+          <input id="pw" type="password" oninput="checkStrength(this.value)">
+          <div class="pw-strength" id="pwStr"></div>
+          <div class="pw-hint" id="pwHint">Min 6 characters</div>
+        </div>
+        <div class="fg">
+          <label>Confirm *</label>
+          <input id="pw2" type="password">
+        </div>
+      </div>
+
+      <button class="btn btn-p" style="width:100%;padding:11px;" onclick="doSignup()">
+        Create Account →
+      </button>
+
+      <div class="credit mt-2">Made by <strong>GPNV Creations</strong></div>
+    </div>
+  </div>
+
+  <script>
+    function $(id){ return document.getElementById(id); }
+
+    function toast(msg, t='i'){
+      const w = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = 'toast toast-' + t;
+      el.textContent = msg;
+      w.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function checkStrength(pw){
+      const bar = $('pwStr'), hint = $('pwHint');
+      if(pw.length < 6){ bar.style.width='20%'; hint.textContent='Weak'; return; }
+      bar.style.width='100%'; hint.textContent='Strong 💪';
+    }
+
+    // ✅ FIXED FUNCTION (CONNECTS TO BACKEND)
+    async function doSignup(){
+  const fnEl = document.getElementById('fn');
+  const lnEl = document.getElementById('ln');
+  const emEl = document.getElementById('em');
+  const unEl = document.getElementById('un');
+  const phEl = document.getElementById('ph');
+  const pwEl = document.getElementById('pw');
+  const pw2El = document.getElementById('pw2');
+
+  // 🔴 check if elements exist
+  if (!fnEl || !emEl || !unEl || !pwEl || !pw2El) {
+    console.error("Input fields missing");
+    return toast("Form error — reload page", "e");
+  }
+
+  const fn = fnEl.value.trim();
+  const ln = lnEl.value.trim();
+  const em = emEl.value.trim();
+  const un = unEl.value.trim();
+  const ph = phEl.value.trim();
+  const pw = pwEl.value;
+  const pw2 = pw2El.value;
+
+  if(!fn || !em || !un || !pw){
+    return toast('Please fill all required (*) fields', 'e');
+  }
+
+  if(pw.length < 6){
+    return toast('Password must be at least 6 characters', 'e');
+  }
+
+  if(pw !== pw2){
+    return toast('Passwords do not match', 'e');
+  }
+
+  try {
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        username: un,
+        email: em,
+        password: pw,
+        first_name: fn,
+        last_name: ln,
+        phone: ph
+      })
+    });
+
+    const result = await res.json();
+
+    if(res.ok){
+      toast('Account created successfully ✅', 's');
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 1000);
+    } else {
+      toast(result.error || 'Signup failed', 'e');
+    }
+
+  } catch (err) {
+    console.error(err);
+    toast('Server error — check backend', 'e');
+  }
+}
+  </script>
+</body>
+</html>

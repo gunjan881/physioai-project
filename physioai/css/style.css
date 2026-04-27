@@ -1,0 +1,174 @@
+/* ============================================================
+   PhysioAI — Global Stylesheet
+   Built by GPNV Creations
+   ============================================================ */
+
+:root {
+  --t:   #00c9b1;
+  --td:  #009e8c;
+  --n:   #0a1628;
+  --s:   #1a2e4a;
+  --s2:  #243650;
+  --w:   #f0f8ff;
+  --m:   #7aa3c0;
+  --r:   #ff4d6d;
+  --y:   #ffbe0b;
+  --g:   #06d6a0;
+  --cb:  rgba(14,31,56,0.90);
+  --bo:  rgba(0,201,177,0.20);
+}
+
+/* ── RESET ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--n);
+  color: var(--w);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── ANIMATED BG ── */
+.bg {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.bg::before {
+  content: '';
+  position: absolute; width: 700px; height: 700px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,201,177,.09) 0%, transparent 70%);
+  top: -150px; left: -150px;
+  animation: bgd1 13s ease-in-out infinite alternate;
+}
+.bg::after {
+  content: '';
+  position: absolute; width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,60,200,.07) 0%, transparent 70%);
+  bottom: -80px; right: -80px;
+  animation: bgd2 17s ease-in-out infinite alternate;
+}
+@keyframes bgd1 { to { transform: translate(90px,70px) scale(1.2); } }
+@keyframes bgd2 { to { transform: translate(-70px,-50px) scale(1.15); } }
+
+/* ── NAVBAR ── */
+nav {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--bo);
+  background: rgba(10,22,40,.82);
+  backdrop-filter: blur(14px);
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 1.35rem;
+  color: var(--t); line-height: 1;
+  text-decoration: none;
+}
+.logo span { color: var(--w); }
+.logo small {
+  display: block; font-size: .55rem;
+  color: var(--m); font-weight: 400;
+  letter-spacing: .03em; margin-top: 1px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 8px 20px; border-radius: 50px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500; font-size: .85rem;
+  cursor: pointer; transition: all .2s; border: none;
+}
+.btn-p  { background: var(--t); color: var(--n); font-weight: 700; }
+.btn-p:hover { background: var(--td); transform: translateY(-1px); box-shadow: 0 5px 18px rgba(0,201,177,.3); }
+.btn-o  { background: transparent; border: 1.5px solid var(--t); color: var(--t); }
+.btn-o:hover { background: var(--t); color: var(--n); }
+.btn-g  { background: transparent; border: 1.5px solid var(--bo); color: var(--m); }
+.btn-g:hover { border-color: var(--t); color: var(--t); }
+.btn-r  { background: rgba(255,77,109,.15); border: 1.5px solid var(--r); color: var(--r); }
+.btn-r:hover { background: var(--r); color: #fff; }
+.btn-sm { padding: 6px 13px; font-size: .78rem; }
+
+/* ── CARD ── */
+.card {
+  background: var(--cb); border: 1px solid var(--bo);
+  border-radius: 15px; padding: 20px;
+  backdrop-filter: blur(10px);
+}
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: .95rem;
+  margin-bottom: 12px; color: var(--t);
+}
+
+/* ── FORMS ── */
+.fg { margin-bottom: 13px; }
+.fg label {
+  display: block; font-size: .78rem;
+  color: var(--m); margin-bottom: 4px; font-weight: 500;
+}
+.fg input, .fg select {
+  width: 100%; padding: 10px 12px;
+  background: var(--s); border: 1.5px solid var(--bo);
+  border-radius: 10px; color: var(--w);
+  font-family: 'DM Sans', sans-serif;
+  font-size: .87rem; outline: none;
+  transition: border-color .2s;
+}
+.fg input:focus, .fg select:focus { border-color: var(--t); }
+.fg select option { background: var(--s); }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── UTILITIES ── */
+.cw  { display: flex; align-items: center; justify-content: center; flex: 1; padding: 28px 16px; }
+.sep { border: none; border-top: 1px solid var(--bo); }
+.text-t { color: var(--t); }
+.text-m { color: var(--m); }
+.text-r { color: var(--r); }
+.text-y { color: var(--y); }
+.text-g { color: var(--g); }
+.mt-1  { margin-top: 6px; }
+.mt-2  { margin-top: 12px; }
+.flex-c { display: flex; align-items: center; gap: 8px; }
+
+/* ── TOAST ── */
+.toast-wrap {
+  position: fixed; bottom: 20px; right: 20px;
+  display: flex; flex-direction: column;
+  gap: 7px; z-index: 9999;
+}
+.toast {
+  padding: 10px 16px; border-radius: 10px;
+  font-size: .8rem; font-weight: 500;
+  backdrop-filter: blur(12px); border: 1px solid;
+  animation: toast-in .3s ease; max-width: 270px;
+}
+.toast-s { background: rgba(6,214,160,.15); border-color: var(--g); color: var(--g); }
+.toast-e { background: rgba(255,77,109,.15); border-color: var(--r); color: var(--r); }
+.toast-i { background: rgba(0,201,177,.12); border-color: var(--t); color: var(--t); }
+@keyframes toast-in { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── BADGE ── */
+.bx    { padding: 3px 8px; border-radius: 50px; font-size: .67rem; font-weight: 700; }
+.bx-e  { background: rgba(6,214,160,.14); color: var(--g); }
+.bx-m  { background: rgba(255,190,11,.14); color: var(--y); }
+.bx-h  { background: rgba(255,77,109,.14); color: var(--r); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--s2); border-radius: 2px; }
+
+/* ── CREDIT FOOTER ── */
+.credit {
+  font-size: .7rem; color: var(--m);
+  text-align: center; padding: 5px 0;
+  border-top: 1px solid var(--bo);
+}
+.credit strong { color: var(--t); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 680px) {
+  nav { padding: 12px 16px; }
+  .g2 { grid-template-columns: 1fr; }
+}

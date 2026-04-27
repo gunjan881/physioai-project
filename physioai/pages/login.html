@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — PhysioAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .auth-link { color: var(--t); cursor: pointer; text-decoration: underline; }
+    .auth-box { width: 100%; max-width: 380px; }
+    .auth-box h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.7rem; margin-bottom: 4px; }
+    .auth-box .sub { color: var(--m); font-size: .82rem; margin-bottom: 20px; }
+    .divider { text-align: center; color: var(--m); font-size: .75rem; margin: 14px 0; position: relative; }
+    .divider::before, .divider::after { content:''; position: absolute; top: 50%; width: 42%; height: 1px; background: var(--bo); }
+    .divider::before { left: 0; } .divider::after { right: 0; }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <nav>
+    <a href="../index.html" class="logo">Physio<span>AI</span><small>by GPNV Creations</small></a>
+    <a href="../index.html" class="btn btn-g btn-sm">← Back</a>
+  </nav>
+
+  <div class="cw" style="position:relative;z-index:2;">
+    <div class="card auth-box">
+      <h2>Welcome Back 👋</h2>
+      <p class="sub">No account? <a href="signup.html" class="auth-link">Sign up free</a></p>
+
+      <div class="fg">
+        <label>Email / Username</label>
+        <input id="li-id" type="text" placeholder="you@email.com">
+      </div>
+
+      <div class="fg">
+        <label>Password</label>
+        <input id="li-pw" type="password">
+      </div>
+
+      <button class="btn btn-p" style="width:100%;padding:11px;" onclick="doLogin()">
+        Sign In →
+      </button>
+
+      <div class="divider">or</div>
+
+      <div style="text-align:center;font-size:.78rem;color:var(--m);">
+        New here? <a href="signup.html" class="auth-link">Create a free account</a>
+      </div>
+
+      <div class="credit mt-2">Made by <strong>GPNV Creations</strong></div>
+    </div>
+  </div>
+
+  <script>
+    function $(id){ return document.getElementById(id); }
+
+    function toast(msg, t='i'){
+      const w = document.getElementById('toastWrap');
+      const el = document.createElement('div');
+      el.className = 'toast toast-' + t;
+      el.textContent = msg;
+      w.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ✅ FIXED LOGIN (BACKEND CONNECTED)
+    async function doLogin(){
+      const id = $('li-id').value.trim();
+      const pw = $('li-pw').value;
+
+      if(!id || !pw) return toast('Please fill all fields', 'e');
+
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          identifier: id,
+          password: pw
+        })
+      });
+
+      const user = await res.json();
+
+      if(res.ok){
+        localStorage.setItem("pu", JSON.stringify(user)); // store session
+        toast("Login successful ✅","s");
+
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 800);
+      } else {
+        toast(user.error, "e");
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if(e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>

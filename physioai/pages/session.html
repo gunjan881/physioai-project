@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Session — PhysioAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { display: flex; flex-direction: row; min-height: 100vh; overflow: hidden; }
+    .sess-left { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 13px; position: relative; overflow-y: auto; }
+    .cam-wrap {
+      position: relative; width: 100%; max-width: 640px;
+      aspect-ratio: 4/3; border-radius: 15px; overflow: hidden;
+      border: 2.5px solid var(--bo); background: #000;
+      box-shadow: 0 0 35px rgba(0,201,177,.12);
+    }
+    #liveVideo {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      display: block;
+      z-index: 1;
+    }
+    #skeletonCanvas {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 2; pointer-events: none;
+    }
+    .no-cam {
+      position: absolute; inset: 0;
+      background: rgba(10,22,40,.88);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; z-index: 8; border-radius: 13px;
+      text-align: center; padding: 20px;
+    }
+    .cam-hud {
+      position: absolute; top: 9px; left: 9px; right: 9px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      z-index: 10; pointer-events: none;
+    }
+    .sess-timer {
+      font-family: 'Syne',sans-serif; font-weight: 800; font-size: 1.75rem;
+      color: var(--t); text-shadow: 0 0 16px rgba(0,201,177,.9);
+      background: rgba(10,22,40,.72); padding: 5px 14px;
+      border-radius: 50px; backdrop-filter: blur(8px);
+    }
+    .align-chip {
+      padding: 5px 12px; border-radius: 50px;
+      font-size: .76rem; font-weight: 700; backdrop-filter: blur(8px);
+    }
+    .chip-ok   { background:rgba(6,214,160,.22);  border:1px solid var(--g); color:var(--g); }
+    .chip-bad  { background:rgba(255,77,109,.22);  border:1px solid var(--r); color:var(--r); animation:blink .6s infinite alternate; }
+    .chip-wait { background:rgba(255,190,11,.22);  border:1px solid var(--y); color:var(--y); }
+    @keyframes blink { to { opacity:.35; } }
+    .det-strip {
+      position: absolute; bottom: 9px; left: 0; right: 0;
+      display: flex; gap: 6px; justify-content: center;
+      z-index: 10; flex-wrap: wrap; padding: 0 9px;
+    }
+    .det {
+      padding: 4px 10px; border-radius: 50px; font-size: .68rem;
+      font-weight: 600; backdrop-filter: blur(8px);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .det .dd { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .det-ok   { background:rgba(6,214,160,.15);  border:1px solid var(--g); color:var(--g); }
+    .det-warn { background:rgba(255,190,11,.15);  border:1px solid var(--y); color:var(--y); animation:blink .5s infinite alternate; }
+    .det-bad  { background:rgba(255,77,109,.15);  border:1px solid var(--r); color:var(--r); animation:blink .4s infinite alternate; }
+    .rest-ov {
+      position: absolute; inset: 0;
+      background: rgba(10,22,40,.95);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; z-index: 20; border-radius: 13px;
+    }
+    .rest-ov.show { display: flex; }
+    .rest-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.15rem; color:var(--y); }
+    .rest-clock { font-family:'Syne',sans-serif; font-weight:800; font-size:2.6rem; color:var(--t); }
+    .align-guide {
+      width: 100%; max-width: 640px; margin-top: 9px;
+      background: rgba(0,201,177,.07); border: 1.5px solid var(--bo);
+      border-radius: 11px; padding: 10px 13px;
+      display: flex; gap: 11px; align-items: flex-start;
+    }
+    .sess-right {
+      width: 258px; flex-shrink: 0;
+      background: rgba(7,15,30,.95);
+      border-left: 1px solid var(--bo);
+      padding: 15px; display: flex; flex-direction: column;
+      gap: 11px; overflow-y: auto;
+    }
+    .metric-box { padding: 10px; background: var(--s); border-radius: 9px; text-align: center; }
+    .metric-val { font-family:'Syne',sans-serif; font-weight:800; font-size:1.35rem; }
+    .metric-lbl { font-size:.67rem; color:var(--m); margin-top:1px; }
+    .metrics-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .acc-ring { position: relative; width: 82px; height: 82px; margin: 0 auto 4px; }
+    .acc-ring svg { transform: rotate(-90deg); }
+    .acc-ring .acc-val {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne',sans-serif; font-weight: 800;
+      font-size: 1.1rem; color: var(--t);
+    }
+    .angle-box { padding: 10px; background: var(--s); border-radius: 9px; }
+    .angle-row { display: flex; justify-content: space-between; font-size: .73rem; margin-bottom: 4px; }
+    .angle-bar { height: 7px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; position: relative; margin-bottom: 3px; }
+    .angle-fill { position: absolute; top: 0; height: 100%; border-radius: 3px; transition: width .3s; }
+    .hint-box { padding: 10px; background: var(--s); border-radius: 9px; font-size: .76rem; color: var(--m); line-height: 1.55; }
+    @media (max-width: 680px) {
+      body { flex-direction: column; overflow: auto; }
+      .sess-right { width: 100%; border-left: none; border-top: 1px solid var(--bo); }
+      .cam-wrap { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="sess-left">
+    <div class="cam-wrap">
+      <video id="liveVideo" autoplay playsinline muted></video>
+      <canvas id="skeletonCanvas"></canvas>
+      <div class="no-cam" id="noCamBanner">
+        <div style="font-size:2.8rem;">📷</div>
+        <p><strong>Camera not visible?</strong><br>Allow camera access and click Retry.</p>
+        <button class="btn btn-p btn-sm" onclick="retryCamera()">Retry Camera</button>
+      </div>
+      <div class="cam-hud">
+        <div class="sess-timer" id="sessTimer">0:00</div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+          <div class="align-chip chip-wait" id="alignChip">⏳ Detecting…</div>
+          <button class="btn btn-sm btn-r" style="pointer-events:all;" onclick="endSession()">■ End</button>
+        </div>
+      </div>
+      <div class="det-strip">
+        <div class="det det-ok" id="det-pose"><span class="dd"></span>Pose: OK</div>
+        <div class="det det-ok" id="det-face"><span class="dd"></span>Expression: Normal</div>
+        <div class="det det-ok" id="det-shiv"><span class="dd"></span>Muscle: Steady</div>
+      </div>
+      <div class="rest-ov" id="restOverlay">
+        <div style="font-size:3rem;" id="restIcon">😮‍💨</div>
+        <div class="rest-title" id="restTitle">Rest Time</div>
+        <div class="rest-clock" id="restClock">2:00</div>
+        <div style="font-size:.78rem;color:var(--m);text-align:center;max-width:230px;" id="restMsg">Take a breather!</div>
+        <button class="btn btn-p btn-sm" onclick="skipRest()">Skip Rest →</button>
+      </div>
+    </div>
+
+    <div class="align-guide">
+      <div style="font-size:1.5rem;flex-shrink:0;">🧘</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;color:var(--t);margin-bottom:5px;">AI Real‑time Feedback</div>
+        <div class="ag-steps">
+          <div class="ag-step"><span class="ag-num">1</span>Stand <strong>2–3 metres back</strong> – full body visible</div>
+          <div class="ag-step"><span class="ag-num">2</span>Your skeleton turns <strong style="color:var(--g);">green</strong> when correct, <strong style="color:var(--r);">red</strong> when wrong</div>
+          <div class="ag-step"><span class="ag-num">3</span>Listen to voice commands to correct your posture</div>
+          <div class="ag-step"><span class="ag-num">4</span>Complete the reps within the time limit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sess-right">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;" id="sessExName">Exercise</div>
+    <hr class="sep">
+    <div class="card" style="padding:11px;text-align:center;">
+      <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m);margin-bottom:7px;">Accuracy</div>
+      <div class="acc-ring">
+        <svg width="82" height="82" viewBox="0 0 82 82">
+          <circle cx="41" cy="41" r="34" fill="none" stroke="var(--s)" stroke-width="6"/>
+          <circle id="accArc" cx="41" cy="41" r="34" fill="none" stroke="var(--t)"
+            stroke-width="6" stroke-dasharray="213.63" stroke-dashoffset="213.63" stroke-linecap="round"/>
+        </svg>
+        <div class="acc-val" id="accPct">0%</div>
+      </div>
+    </div>
+    <div class="metrics-4">
+      <div class="metric-box"><div class="metric-val text-t" id="metReps">0</div><div class="metric-lbl">Reps</div></div>
+      <div class="metric-box"><div class="metric-val text-y" id="metWrong">0</div><div class="metric-lbl">Wrong</div></div>
+      <div class="metric-box"><div class="metric-val text-r" id="metPain">0</div><div class="metric-lbl">Tiredness</div></div>
+      <div class="metric-box"><div class="metric-val text-y" id="metFat">0</div><div class="metric-lbl">Fatigue</div></div>
+    </div>
+    <div class="angle-box">
+      <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m);margin-bottom:6px;">Target vs Your Angle</div>
+      <div class="angle-row"><span style="color:var(--t);">🎯 Target: <span id="ghostAngle">0°</span></span><span style="color:var(--g);">You: <span id="yourAngle">—</span></span></div>
+      <div class="angle-bar"><div class="angle-fill" id="targetBar" style="width:50%;background:var(--t);"></div></div>
+      <div class="angle-bar"><div class="angle-fill" id="yourBar" style="width:0%; background:var(--g);"></div></div>
+    </div>
+    <div class="hint-box" id="hintBox">Stand back. Full body visible. Follow the voice commands.</div>
+    <div class="credit">Made by <strong>GPNV Creations</strong></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/session.js"></script>
+</body>
+</html>

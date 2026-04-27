@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — PhysioAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* Same as before */
+    html, body { height: 100%; }
+    body { display: flex; flex-direction: row; min-height: 100vh; }
+    .bg { pointer-events: none !important; }
+    .sidebar { width: 230px; min-height: 100vh; background: rgba(7,15,30,.97); border-right: 1px solid var(--bo); padding: 16px 13px; display: flex; flex-direction: column; gap: 13px; flex-shrink: 0; position: relative; z-index: 20; }
+    .sb-label { font-size:.64rem; text-transform:uppercase; letter-spacing:.1em; color:var(--m); font-weight:600; margin-bottom:2px; }
+    .diff-row { display:flex; gap:5px; }
+    .diff-btn { flex:1; padding:7px 2px; border-radius:8px; border:1.5px solid var(--bo); background:transparent; color:var(--m); font-size:.72rem; cursor:pointer; transition:all .2s; }
+    .diff-btn:hover { border-color:var(--t); color:var(--t); }
+    .diff-btn.on { border-color:var(--t); color:var(--t); background:rgba(0,201,177,.09); }
+    .main { flex:1; padding:22px 24px; overflow-y:auto; position:relative; z-index:10; }
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+    .stat-card { text-align:center; padding:14px 8px; }
+    .stat-num { font-family:'Syne',sans-serif; font-weight:800; font-size:1.7rem; color:var(--t); }
+    .stat-lbl { font-size:.7rem; color:var(--m); margin-top:2px; }
+    .ex-item { display:flex; align-items:center; gap:12px; padding:13px 16px; background:var(--cb); border:1px solid var(--bo); border-radius:12px; cursor:pointer; transition:all .2s; margin-bottom:9px; }
+    .ex-item:hover { border-color:var(--t); transform:translateX(3px); box-shadow:0 2px 16px rgba(0,201,177,.1); }
+    .ex-thumb { width:44px; height:44px; border-radius:10px; background:rgba(0,201,177,.1); display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+    .ex-name { font-family:'Syne',sans-serif; font-weight:700; font-size:.88rem; }
+    .ex-meta { font-size:.72rem; color:var(--m); margin-top:2px; }
+    .hist-item { display:flex; justify-content:space-between; align-items:center; padding:9px 12px; background:var(--s); border-radius:9px; font-size:.78rem; margin-bottom:6px; }
+    .hist-acc { font-weight:700; color:var(--t); }
+    .panel { position:fixed; top:0; right:-310px; width:290px; height:100vh; overflow-y:auto; background:rgba(6,12,26,.98); border-left:1px solid var(--bo); padding:16px; display:flex; flex-direction:column; gap:14px; transition:right .3s ease; z-index:200; backdrop-filter:blur(20px); }
+    .panel.open { right:0; }
+    .panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; z-index:199; cursor:pointer; }
+    .panel-overlay.show { display:block; }
+    @media(max-width:700px){ body { flex-direction:column; } .sidebar { width:100%; min-height:auto; flex-direction:row; flex-wrap:wrap; padding:12px; } .stats-row { grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+  <div class="panel-overlay" id="panelOverlay" onclick="togglePanel()"></div>
+
+  <div class="sidebar">
+    <a href="../index.html" class="logo" style="font-size:1rem;text-decoration:none;">Physio<span style="color:var(--w);">AI</span><small>by GPNV Creations</small></a>
+    <hr class="sep">
+    <div><div class="sb-label">Difficulty</div><div class="diff-row"><button class="diff-btn on" id="dif-easy" onclick="setDiff('Easy')">Easy</button><button class="diff-btn" id="dif-inter" onclick="setDiff('Intermediate')">Med</button><button class="diff-btn" id="dif-hard" onclick="setDiff('High')">Hard</button></div></div>
+    <hr class="sep">
+    <div style="font-size:.76rem;display:flex;flex-direction:column;gap:6px;"><div class="sb-label">Report Card</div><div style="color:var(--m);">Sessions: <strong id="sb-total" style="color:var(--t);">0</strong></div><div style="color:var(--m);">Pain events: <strong id="sb-pain" style="color:var(--t);">0</strong></div><div style="color:var(--m);">Wrong reps: <strong id="sb-wrong" style="color:var(--t);">0</strong></div></div>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;"><button class="btn btn-g btn-sm" onclick="downloadCSV()">⬇ Download CSV</button><button class="btn btn-g btn-sm" onclick="togglePanel()">☰ Options</button><button class="btn btn-sm btn-r" onclick="doLogout()">Logout</button></div>
+  </div>
+
+  <div class="main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;"><div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;">Hey, <span style="color:var(--t);" id="dash-name">—</span> 👋</div><div style="color:var(--m);font-size:.78rem;margin-top:3px;" id="dash-sub">Your recovery plan for —</div></div><button class="btn btn-p" onclick="startNewSession()" style="white-space:nowrap;">▶ Start Session</button></div>
+    <div class="stats-row"><div class="card stat-card"><div class="stat-num" id="st-sessions">0</div><div class="stat-lbl">Sessions</div></div><div class="card stat-card"><div class="stat-num" id="st-acc">—</div><div class="stat-lbl">Avg Accuracy</div></div><div class="card stat-card"><div class="stat-num" id="st-pain">0</div><div class="stat-lbl">Pain Events</div></div><div class="card stat-card"><div class="stat-num" id="st-fatigue">0</div><div class="stat-lbl">Fatigue Events</div></div></div>
+    <div class="card" style="margin-bottom:18px;"><div class="card-title">📋 Your Exercise Plan</div><div id="exList"><div style="color:var(--m);font-size:.82rem;">Loading your exercises…</div></div></div>
+    <div class="card"><div class="card-title">📅 Session History</div><div id="histList"><div style="color:var(--m);font-size:.78rem;">No sessions yet — start one above!</div></div></div>
+  </div>
+
+  <div class="panel" id="optPanel">
+    <button onclick="togglePanel()" style="align-self:flex-end;background:none;border:none;color:var(--m);font-size:1.2rem;cursor:pointer;">✕</button>
+    <div class="card-title" style="margin-bottom:0;">Options</div>
+    <div class="card"><div class="card-title" style="font-size:.84rem;margin-bottom:8px;">👤 Your Details</div><div id="regDetails" style="font-size:.78rem;color:var(--m);line-height:2.1;"></div><a href="profile.html" class="btn btn-g btn-sm" style="display:inline-block;margin-top:10px;">✏ Edit Profile</a></div>
+    <div class="card"><div class="card-title" style="font-size:.84rem;margin-bottom:8px;">🔄 Change Condition</div><div class="fg"><label>Injury Type</label><select id="ep-inj" onchange="epFillCauses()"><option>Shoulder Pain</option><option>Neck Pain</option><option>Back Pain</option><option>Leg Pain</option><option>Ankle/Foot Pain</option><option>Foot Pain</option><option>Knee Pain</option><option>Hip Pain</option><option>Elbow/Wrist Pain</option></select></div><div class="fg"><label>Cause / Condition</label><select id="ep-caus"><option value="">Select cause…</option></select></div><button class="btn btn-p btn-sm" onclick="applyCondition()">Apply &amp; Start →</button></div>
+    <div class="card"><div class="card-title" style="font-size:.84rem;margin-bottom:8px;">ℹ About PhysioAI</div><div style="font-size:.75rem;color:var(--m);line-height:1.85;">Built by <strong style="color:var(--t);">GPNV Creations</strong><br>AI Physiotherapy using MediaPipe Pose, FaceMesh &amp; Web Speech API.<br><br>📧 support@physioai.app</div></div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    let U = null;
+
+    // Fallback mapping in case window.IC is not available
+    const CAUSE_MAP = {
+      "Shoulder Pain": ["Frozen Shoulder","Calcific Tendinopathy","Shoulder Osteoarthritis","Rotator Cuff-Related Pain","AC Joint Disorder"],
+      "Neck Pain": ["Muscle Strain","Cervical Spondylosis","Herniated Disc","Cervical Stenosis","Whiplash"],
+      "Back Pain": ["Muscle Strain / Ligament Sprain","Herniated Disc","Spinal Stenosis","Spondylolisthesis"],
+      "Leg Pain": ["Muscle Strain (Leg)","Shin Splints","Patellofemoral Pain (Leg)","Sciatica"],
+      "Ankle/Foot Pain": ["Ankle Sprain","Achilles Tendinopathy","Ankle Osteoarthritis","Gout"],
+      "Foot Pain": ["Plantar Fasciitis","Achilles Tendinitis"],
+      "Knee Pain": ["Patellofemoral Pain","Meniscus Tear","IT Band Syndrome","Osteoarthritis"],
+      "Hip Pain": ["Hip Flexor Strain","Bursitis","Hip Impingement"],
+      "Elbow/Wrist Pain": ["Tennis Elbow","Golfer's Elbow","Carpal Tunnel","De Quervain's"]
+    };
+
+    function epFillCauses(){
+      const inj = $('ep-inj').value;
+      const sel = $('ep-caus');
+      sel.innerHTML = '<option value="">Select cause…</option>';
+      // Try to get causes from global IC first, fallback to CAUSE_MAP
+      let causes = [];
+      if(window.IC && window.IC[inj]) {
+        causes = window.IC[inj];
+      } else if(CAUSE_MAP[inj]) {
+        causes = CAUSE_MAP[inj];
+      }
+      causes.forEach(c => {
+        const o = document.createElement('option');
+        o.value = o.textContent = c;
+        sel.appendChild(o);
+      });
+      if(causes.length === 0) {
+        console.warn("No causes found for injury:", inj);
+        sel.innerHTML += '<option disabled>No causes available</option>';
+      }
+    }
+
+    function toast(msg, t='i'){
+      const w=$('toastWrap'), el=document.createElement('div');
+      el.className='toast toast-'+t; el.textContent=msg;
+      w.appendChild(el); setTimeout(()=>el.remove(),3200);
+    }
+
+    function getSessions(){
+      return JSON.parse(localStorage.getItem('ps')||'[]').filter(s=>s.user===U?.username);
+    }
+
+    function refreshDashboard(){
+      if(!U){ window.location.href='login.html'; return; }
+      const p = U.profile;
+      $('dash-name').textContent = U.fn || U.username || 'Friend';
+      if(!p){
+        $('dash-sub').textContent = 'Complete your profile to get started.';
+        return;
+      }
+      $('dash-sub').textContent = 'Your recovery plan for: ' + (p.cause||'—');
+      setDiff(p.difficulty||'Easy', false);
+
+      const ses = getSessions();
+      $('st-sessions').textContent = ses.length;
+      $('sb-total').textContent    = ses.length;
+      const tp=ses.reduce((a,s)=>a+(s.pain||0),0);
+      const tf=ses.reduce((a,s)=>a+(s.fat||0),0);
+      const tw=ses.reduce((a,s)=>a+(s.wrong||0),0);
+      $('st-pain').textContent    = tp;
+      $('st-fatigue').textContent = tf;
+      $('sb-pain').textContent    = tp;
+      $('sb-wrong').textContent   = tw;
+      if(ses.length){
+        const avg=Math.round(ses.reduce((a,s)=>a+(s.acc||0),0)/ses.length);
+        $('st-acc').textContent = avg+'%';
+      }
+
+      const exs   = getExs(p.cause);
+      const d     = p.difficulty||'Easy';
+      const bc    = d==='High'?'bx-h':d==='Intermediate'?'bx-m':'bx-e';
+      const icons = ['🤸','💪','🧘','🏋️','🦵','🦶','🏃','🤾'];
+      $('exList').innerHTML = exs.map((e,i)=>`
+        <div class="ex-item" onclick="startFromExercise(${i})">
+          <div class="ex-thumb">${icons[i%icons.length]}</div>
+          <div style="flex:1;">
+            <div class="ex-name">${e.name}</div>
+            <div class="ex-meta">${e.dur}s &nbsp;·&nbsp; ${e.reps||''} &nbsp;·&nbsp; ${e.syms[0]||''}</div>
+          </div>
+          <span class="bx ${bc}" style="flex-shrink:0;">${d}</span>
+        </div>`).join('');
+
+      if(ses.length){
+        $('histList').innerHTML = ses.slice(-10).reverse().map(s=>`
+          <div class="hist-item">
+            <div>
+              <div style="font-weight:500;">${s.exercise}</div>
+              <div style="color:var(--m);font-size:.7rem;">${new Date(s.date).toLocaleDateString()}</div>
+            </div>
+            <span class="hist-acc">${s.acc}%</span>
+          </div>`).join('');
+      }
+
+      $('regDetails').innerHTML =
+        `<b>Name:</b> ${U.fn||''} ${U.ln||''}<br>
+         <b>Age:</b> ${p.age||'—'}<br>
+         <b>Weight:</b> ${p.weight||'—'} kg<br>
+         <b>Injury:</b> ${p.injury||'—'}<br>
+         <b>Cause:</b> ${p.cause||'—'}`;
+    }
+
+    function setDiff(d, save=true){
+      ['Easy','Intermediate','High'].forEach(dd=>{
+        const ids={Easy:'dif-easy',Intermediate:'dif-inter',High:'dif-hard'};
+        $(ids[dd])?.classList.toggle('on', dd===d);
+      });
+      if(save && U?.profile){
+        U.profile.difficulty=d;
+        localStorage.setItem('pu',JSON.stringify(U));
+        toast('Difficulty set to '+d,'s');
+      }
+    }
+
+    function togglePanel(){
+      const panel = $('optPanel');
+      const overlay = $('panelOverlay');
+      panel.classList.toggle('open');
+      overlay.classList.toggle('show');
+      if(panel.classList.contains('open')){
+        epFillCauses();  // Populate causes when panel opens
+      }
+    }
+
+   async function applyCondition(){
+  const inj = $('ep-inj').value;
+  const caus = $('ep-caus').value;
+
+  if(!caus){
+    return toast('Please select a cause','e');
+  }
+
+  if(!U){
+    return toast('User not found','e');
+  }
+
+  try {
+    const res = await fetch("/api/profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id: U.id,
+        injury_area: inj,
+        cause: caus,
+        difficulty: U?.profile?.difficulty || "Easy"
+      })
+    });
+
+    const result = await res.json();
+
+    if(res.ok){
+      U.profile = {
+        injury: inj,
+        cause: caus,
+        difficulty: "Easy"
+      };
+
+      localStorage.setItem('pu', JSON.stringify(U));
+
+      togglePanel();
+      toast('Condition updated!','s');
+
+      window.location.href = "demo.html";
+
+    } else {
+      toast(result.error || "Failed to update",'e');
+    }
+
+  } catch (err) {
+    console.error(err);
+    toast('Server error','e');
+  }
+}
+
+    function startNewSession(){
+      if(!U?.profile?.cause) return toast('Complete your profile first','e');
+      localStorage.setItem('currentExIdx','0');
+      window.location.href='demo.html';
+    }
+
+    function startFromExercise(idx){
+      localStorage.setItem('currentExIdx',idx.toString());
+      window.location.href='demo.html';
+    }
+
+    function downloadCSV(){
+      const p=U?.profile||{}, ses=getSessions();
+      let c=`PhysioAI Report — GPNV Creations\n`;
+      c+=`Name,${U?.fn||''} ${U?.ln||''}\nAge,${p.age||''}\nWeight,${p.weight||''}kg\n`;
+      c+=`Injury,${p.injury||''}\nCause,${p.cause||''}\n\nTotal Sessions,${ses.length}\n\n`;
+      c+=`Date,Exercise,Accuracy,Reps,Wrong,Pain,Fatigue\n`;
+      ses.forEach(s=>{
+        c+=`${new Date(s.date).toLocaleDateString()},${s.exercise},${s.acc}%,${s.reps||0},${s.wrong||0},${s.pain||0},${s.fat||0}\n`;
+      });
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));
+      a.download='physioai_report.csv'; a.click();
+      toast('CSV downloaded!','s');
+    }
+
+    function doLogout(){
+      localStorage.removeItem('pu');
+      localStorage.removeItem('currentExIdx');
+      window.location.href='../index.html';
+    }
+
+   window.onload = async () => {
+  U = JSON.parse(localStorage.getItem('pu')||'null');
+
+  if(!U){
+    window.location.href='login.html';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/profile/${U.id}`);
+    const profile = await res.json();
+
+    // 🔥 FIX: no redirect
+    if(!profile || Object.keys(profile).length === 0){
+      U.profile = null;
+    } else {
+      U.profile = {
+        age: profile.age,
+        weight: profile.weight_kg,
+        injury: profile.injury_area,
+        cause: profile.cause,
+        difficulty: profile.difficulty
+      };
+    }
+
+    localStorage.setItem('pu', JSON.stringify(U));
+    refreshDashboard();
+
+  } catch (err) {
+    console.error(err);
+    refreshDashboard();
+  }
+};
+  </script>
+</body>
+</html>
