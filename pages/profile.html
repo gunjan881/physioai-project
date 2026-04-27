@@ -2,73 +2,174 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile Setup — PhysioAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+    .profile-box { width: 100%; max-width: 460px; }
+    .step-bar { display: flex; gap: 6px; margin-bottom: 20px; }
+    .step { flex: 1; height: 4px; border-radius: 2px; background: var(--bo); }
+    .step.done { background: var(--td); }
+    .step.active { background: var(--t); box-shadow: 0 0 8px var(--t); }
+  </style>
 </head>
 <body>
+  <div class="bg"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
 
-<h2>Profile Setup</h2>
+  <nav>
+    <a href="../index.html" class="logo">Physio<span>AI</span><small>by GPNV Creations</small></a>
+    <span style="font-size:.78rem;color:var(--m);">Step 2 of 2 — Profile</span>
+  </nav>
 
-<input id="pr-age" placeholder="Age"><br><br>
-<input id="pr-wt" placeholder="Weight"><br><br>
-<input id="pr-inj" placeholder="Injury"><br><br>
-<input id="pr-caus" placeholder="Cause"><br><br>
+  <div class="cw" style="position:relative;z-index:2;">
+    <div class="card profile-box">
+      <div class="step-bar">
+        <div class="step done"></div>
+        <div class="step active"></div>
+      </div>
 
-<button onclick="saveProfile()">Save</button>
+      <div class="card-title">Set Up Your Recovery Profile</div>
+      <p style="color:var(--m);font-size:.8rem;margin-bottom:18px;">
+        We personalise your exercise plan based on your injury.
+      </p>
+
+      <div class="g2">
+        <div class="fg"><label>Age *</label><input id="pr-age" type="number" placeholder="28"></div>
+        <div class="fg"><label>Weight (kg) *</label><input id="pr-wt" type="number" placeholder="65"></div>
+      </div>
+
+      <div class="fg">
+        <label>Injury Type *</label>
+        <select id="pr-inj" onchange="fillCauses()">
+          <option value="">Select your injury…</option>
+          <option>Shoulder Pain</option>
+          <option>Neck Pain</option>
+          <option>Back Pain</option>
+          <option>Leg Pain</option>
+          <option>Ankle/Foot Pain</option>
+          <option>Foot Pain</option>
+          <option>Knee Pain</option>
+          <option>Hip Pain</option>
+          <option>Elbow/Wrist Pain</option>
+        </select>
+      </div>
+
+      <div class="fg">
+        <label>Cause / Condition *</label>
+        <select id="pr-caus">
+          <option value="">Select cause…</option>
+        </select>
+      </div>
+
+      <div id="symptomPreview" style="display:none;margin-bottom:14px;padding:12px;background:rgba(0,201,177,.06);border:1px solid var(--bo);border-radius:10px;">
+        <div style="font-size:.72rem;color:var(--m);margin-bottom:7px;font-weight:600;">Common Symptoms</div>
+        <div id="symptomList" style="font-size:.8rem;color:var(--m);line-height:1.8;"></div>
+      </div>
+
+      <button class="btn btn-p" style="width:100%;padding:11px;" onclick="saveProfile()">
+        Save &amp; Go to Dashboard →
+      </button>
+
+      <div class="credit mt-2">Made by <strong>GPNV Creations</strong></div>
+    </div>
+  </div>
 
 <script>
 function $(id){ return document.getElementById(id); }
 
-async function saveProfile() {
-  const age = $('#pr-age').value.trim();
-  const wt = $('#pr-wt').value.trim();
-  const inj = $('#pr-inj').value;
-  const caus = $('#pr-caus').value;
+function toast(msg, t='i'){
+  const w = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + t;
+  el.textContent = msg;
+  w.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
 
-  if (!age || !wt || !inj || !caus) {
+const INJURY_CAUSES = {
+  "Shoulder Pain": ["Frozen Shoulder","Calcific Tendinopathy"],
+  "Neck Pain": ["Muscle Strain","Cervical Spondylosis"],
+  "Back Pain": ["Muscle Strain","Herniated Disc"],
+  "Leg Pain": ["Muscle Strain","Shin Splints"]
+};
+
+function fillCauses(){
+  const inj = $('pr-inj').value;
+  const sel = $('pr-caus');
+  sel.innerHTML = '<option value="">Select cause…</option>';
+  (INJURY_CAUSES[inj] || []).forEach(c => {
+    const o = document.createElement('option');
+    o.value = o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+// ✅ FIXED SAVE FUNCTION (BACKEND CONNECTED)
+async function saveProfile(){
+  const age  = $('pr-age').value.trim();
+  const wt   = $('pr-wt').value.trim();
+  const inj  = $('pr-inj').value;
+  const caus = $('pr-caus').value;
+
+  if(!age || !wt || !inj || !caus){
     return toast('Please fill all fields', 'e');
   }
 
-  const user = JSON.parse(localStorage.getItem("pu"));
-
-  if (!user) {
-    toast('Please login again', 'e');
+  const user = JSON.parse(localStorage.getItem('pu') || 'null');
+  if(!user){
     window.location.href = 'login.html';
     return;
   }
 
+  const profileData = {
+    user_id: user.id,
+    age: age,
+    weight_kg: wt,
+    injury_area: inj,
+    cause: caus,
+    difficulty: "Easy"
+  };
+
+  // Save locally (for report)
+  localStorage.setItem("profile", JSON.stringify(profileData));
+
   try {
     const res = await fetch("/api/profile", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        user_id: user.id,
-        age: age,
-        weight_kg: wt,
-        injury_area: inj,
-        cause: caus,
-        difficulty: "Easy"
-      })
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(profileData)
     });
 
-    const result = await res.json();
-
-    if (res.ok) {
-      toast('Profile saved! 🎉', 's');
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 800);
+    if(res.ok){
+      toast('Profile saved! 🎉','s');
+      setTimeout(()=>{
+        window.location.href='dashboard.html';
+      },800);
     } else {
-      toast(result.error || 'Error saving profile', 'e');
+      toast('Error saving profile','e');
     }
-
-  } catch (err) {
+  } catch(err){
     console.error(err);
-    toast('Server error', 'e');
+    toast('Server error','e');
   }
 }
+
+// Auto-fill when editing
+window.onload = () => {
+  const u = JSON.parse(localStorage.getItem('pu') || 'null');
+  if(!u) window.location.href = 'login.html';
+
+  if(u && u.profile){
+    $('pr-age').value = u.profile.age || '';
+    $('pr-wt').value  = u.profile.weight || '';
+    $('pr-inj').value = u.profile.injury || '';
+    fillCauses();
+    $('pr-caus').value = u.profile.cause || '';
+  }
+};
 </script>
 
 </body>

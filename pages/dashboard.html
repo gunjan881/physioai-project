@@ -259,20 +259,9 @@
       window.location.href='demo.html';
     }
 
-    function downloadCSV(){
-      const p=U?.profile||{}, ses=getSessions();
-      let c=`PhysioAI Report — GPNV Creations\n`;
-      c+=`Name,${U?.fn||''} ${U?.ln||''}\nAge,${p.age||''}\nWeight,${p.weight||''}kg\n`;
-      c+=`Injury,${p.injury||''}\nCause,${p.cause||''}\n\nTotal Sessions,${ses.length}\n\n`;
-      c+=`Date,Exercise,Accuracy,Reps,Wrong,Pain,Fatigue\n`;
-      ses.forEach(s=>{
-        c+=`${new Date(s.date).toLocaleDateString()},${s.exercise},${s.acc}%,${s.reps||0},${s.wrong||0},${s.pain||0},${s.fat||0}\n`;
-      });
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));
-      a.download='physioai_report.csv'; a.click();
-      toast('CSV downloaded!','s');
-    }
+    function downloadReport(){
+  window.open("/report.html");
+}
 
     function doLogout(){
       localStorage.removeItem('pu');
