@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PhysioAI Report</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f6f8;
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border: 2px solid #000;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .brand {
+      text-align: center;
+      font-size: 13px;
+      color: #2e7d32;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    td, th {
+      border: 1px solid #000;
+      padding: 6px;
+      text-align: left;
+    }
+
+    .section-title {
+      background: #e8f5e9;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: right;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="brand">GPNV CREATIONS</div>
+  <h1>PHYSIOAI MEDICAL REPORT</h1>
+
+  <!-- DATE -->
+  <table>
+    <tr>
+      <td>Date</td>
+      <td id="date"></td>
+      <td>Time</td>
+      <td id="time"></td>
+    </tr>
+  </table>
+
+  <!-- PATIENT DETAILS -->
+  <table>
+    <tr class="section-title"><td colspan="4">PATIENT DETAILS</td></tr>
+    <tr>
+      <td>Name</td>
+      <td id="name"></td>
+      <td>Age</td>
+      <td id="age"></td>
+    </tr>
+    <tr>
+      <td>Email</td>
+      <td id="email"></td>
+      <td>Phone</td>
+      <td id="phone"></td>
+    </tr>
+  </table>
+
+  <!-- INJURY DETAILS -->
+  <table>
+    <tr class="section-title"><td colspan="4">INJURY DETAILS</td></tr>
+    <tr>
+      <td>Injury Area</td>
+      <td id="injury"></td>
+      <td>Cause</td>
+      <td id="cause"></td>
+    </tr>
+    <tr>
+      <td>Difficulty</td>
+      <td id="difficulty"></td>
+      <td>Weight</td>
+      <td id="weight"></td>
+    </tr>
+  </table>
+
+  <!-- SESSION -->
+  <table>
+    <tr class="section-title"><td colspan="4">SESSION SUMMARY</td></tr>
+    <tr>
+      <td>Repetitions</td>
+      <td id="reps"></td>
+      <td>Status</td>
+      <td id="status"></td>
+    </tr>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Doctor Signature: ______________________
+  </div>
+
+</div>
+
+<script>
+  // 📅 AUTO DATE
+  const now = new Date();
+  document.getElementById("date").innerText = now.toLocaleDateString("en-GB");
+  document.getElementById("time").innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+  // 🔥 GET DATA FROM LOCAL STORAGE
+  const user = JSON.parse(localStorage.getItem("user"));
+  const profile = JSON.parse(localStorage.getItem("profile"));
+  const session = JSON.parse(localStorage.getItem("session"));
+
+  if(user){
+    document.getElementById("name").innerText = user.username || "";
+    document.getElementById("email").innerText = user.email || "";
+    document.getElementById("phone").innerText = user.phone || "";
+  }
+
+  if(profile){
+    document.getElementById("age").innerText = profile.age || "";
+    document.getElementById("injury").innerText = profile.injury_area || "";
+    document.getElementById("cause").innerText = profile.cause || "";
+    document.getElementById("difficulty").innerText = profile.difficulty || "";
+    document.getElementById("weight").innerText = profile.weight_kg || "";
+  }
+
+  if(session){
+    document.getElementById("reps").innerText = session.reps || "";
+    document.getElementById("status").innerText = session.status || "Completed";
+  }
+</script>
+
+</body>
+</html>
