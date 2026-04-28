@@ -53,21 +53,10 @@
       text-align: right;
       font-size: 12px;
     }
-
-    .download-btn {
-      margin-bottom: 10px;
-      padding: 8px 14px;
-      background: #2e7d32;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
   </style>
 </head>
 
 <body>
-
-<button class="download-btn" onclick="downloadPDF()">⬇ Download PDF</button>
 
 <div class="container">
 
@@ -159,6 +148,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
+
 // 📅 DATE
 const now = new Date();
 document.getElementById("date").innerText = now.toLocaleDateString("en-GB");
@@ -169,24 +159,22 @@ const user = JSON.parse(localStorage.getItem("pu") || "{}");
 const profile = JSON.parse(localStorage.getItem("profile") || "{}");
 const sessions = JSON.parse(localStorage.getItem("ps") || "[]");
 
-// ================= NAME FIX =================
+// ✅ NAME FIX (FINAL)
 document.getElementById("name").innerText =
-  user.fn && user.ln
-    ? user.fn + " " + user.ln
-    : (user.username || "User");
+  user.name || user.username || user.email || "User";
 
-// ================= PATIENT =================
+// PATIENT
 document.getElementById("email").innerText = user.email || "-";
 document.getElementById("phone").innerText = user.phone || "-";
 
-// ================= PROFILE =================
+// PROFILE
 document.getElementById("age").innerText = profile.age || "-";
 document.getElementById("injury").innerText = profile.injury_area || "-";
 document.getElementById("cause").innerText = profile.cause || "-";
 document.getElementById("difficulty").innerText = profile.difficulty || "Easy";
 document.getElementById("weight").innerText = profile.weight_kg || "-";
 
-// ================= CALCULATIONS =================
+// CALCULATIONS
 let totalReps = 0, totalAcc = 0;
 
 sessions.forEach(s => {
@@ -198,7 +186,7 @@ const avgAcc = sessions.length
   ? Math.round(totalAcc / sessions.length)
   : 0;
 
-// ================= SUMMARY =================
+// SUMMARY
 document.getElementById("totalSessions").innerText = sessions.length;
 document.getElementById("avgAcc").innerText = avgAcc + "%";
 document.getElementById("totalReps").innerText = totalReps;
@@ -211,7 +199,7 @@ else if(totalReps < 50) status = "Moderate";
 
 document.getElementById("status").innerText = status;
 
-// ================= TABLE =================
+// TABLE
 const table = document.getElementById("sessionTable");
 
 sessions.forEach(s => {
@@ -229,11 +217,19 @@ sessions.forEach(s => {
   table.innerHTML += row;
 });
 
-// ================= PDF DOWNLOAD =================
+// PDF DOWNLOAD
 function downloadPDF(){
   const element = document.querySelector(".container");
   html2pdf().from(element).save("PhysioAI_Report.pdf");
 }
+
+// 🚀 AUTO DOWNLOAD (DIRECT)
+window.onload = function(){
+  setTimeout(() => {
+    downloadPDF();
+  }, 500);
+};
+
 </script>
 
 </body>
